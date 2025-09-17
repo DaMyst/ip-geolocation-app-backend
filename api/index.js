@@ -11,8 +11,23 @@ const { errorHandler } = require('../middleware/errorHandler');
 const app = express();
 
 // CORS Configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://ip-geolocation-app-frontend.vercel.app',
+  'https://ip-geolocation-app.vercel.app'  // In case you use the project name as subdomain
+];
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
