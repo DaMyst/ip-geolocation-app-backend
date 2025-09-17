@@ -10,6 +10,10 @@ const axios = require('axios');
 // @desc    Register a new user
 // @access  Public
 router.post('/register', async (req, res) => {
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
   try {
     const { email, password } = req.body;
 
