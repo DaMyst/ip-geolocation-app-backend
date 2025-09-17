@@ -19,33 +19,23 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-    return callback(null, true);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
     'Authorization',
     'X-Requested-With',
     'Accept',
-    'Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
+    'Origin'
   ],
-  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
   optionsSuccessStatus: 200
 };
-
-// Handle preflight requests
-app.options('*', cors(corsOptions));
 
 // Enable CORS for all routes
 app.use(cors(corsOptions));
@@ -56,27 +46,27 @@ app.options('*', cors(corsOptions));
 // Parse JSON bodies
 app.use(express.json());
 
-// Log all requests for debugging
+// Log all requests
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Connect to MongoDB
+// MongoDB Connection
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('Connected to MongoDB');
-  } catch (err) {
-    console.error('MongoDB connection error:', err);
+    console.log('MongoDB connected');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
     process.exit(1);
   }
 };
 
-// Initialize routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/geo', geoRoutes);
 app.use('/api/history', historyRoutes);
@@ -84,6 +74,11 @@ app.use('/api/user-logins', userLoginRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
+
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({ success: false, error: 'Endpoint not found' });
+});
 
 // This is the Vercel serverless function handler
 module.exports = async (req, res) => {
