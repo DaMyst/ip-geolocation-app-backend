@@ -2,15 +2,17 @@
   "name": "ip-geolocation-backend",
   "version": "1.0.0",
   "description": "Backend for IP Geolocation App",
+  "type": "module",
   "main": "api/index.js",
   "engines": {
-    "node": ">=14.x"
+    "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "NODE_ENV=production node api/index.js",
-    "dev": "nodemon server.js",
-    "seed": "node seeders/seed.js",
-    "vercel-build": "echo 'Skipping build step'"
+    "start": "node --experimental-json-modules api/index.js",
+    "dev": "nodemon --experimental-json-modules server.js",
+    "seed": "node --experimental-json-modules seeders/seed.js",
+    "build": "echo 'Building...' && npm install",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "axios": "^1.11.0",

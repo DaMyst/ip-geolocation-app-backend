@@ -1,12 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const authRoutes = require('./routes/auth');
-const geoRoutes = require('./routes/geolocation');
-const historyRoutes = require('./routes/history');
-const userLoginRoutes = require('./routes/userLogins');
-const { errorHandler } = require('./middleware/errorHandler');
+import 'dotenv/config';
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import authRoutes from './routes/auth.js';
+import geoRoutes from './routes/geolocation.js';
+import historyRoutes from './routes/history.js';
+import userLoginRoutes from './routes/userLogins.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
