@@ -5,11 +5,12 @@
   "type": "module",
   "main": "api/index.js",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x"
   },
+  "exports": "./api/index.js",
   "scripts": {
-    "start": "node --experimental-json-modules api/index.js",
-    "dev": "nodemon --experimental-json-modules server.js",
+    "start": "node server.mjs",
+    "dev": "nodemon server.mjs",
     "seed": "node --experimental-json-modules seeders/seed.js",
     "build": "echo 'Building...' && npm install",
     "vercel-build": "npm run build"

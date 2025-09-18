@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const historySchema = new mongoose.Schema({
   user: {
@@ -23,4 +23,4 @@ historySchema.index({ user: 1, ip: 1 }, { unique: true });
 
 const History = mongoose.model('History', historySchema);
 
-module.exports = History;
+export default History;

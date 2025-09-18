@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const validator = require('validator');
-const jwt = require('jsonwebtoken');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import validator from 'validator';
+import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -81,7 +81,6 @@ userSchema.methods.toJSON = function () {
 const User = mongoose.model('User', userSchema);
 
 // Export both the model and schema
-module.exports = {
-  User,
-  userSchema
-};
+export { User, userSchema };
+
+export default User;

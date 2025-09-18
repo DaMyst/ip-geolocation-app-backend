@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const UserLoginSchema = new mongoose.Schema({
   user: {
@@ -49,7 +49,6 @@ UserLoginSchema.pre('save', async function(next) {
 const UserLogin = mongoose.model('UserLogin', UserLoginSchema);
 
 // Export the schema as well
-module.exports = {
-  UserLogin,
-  UserLoginSchema
-};
+export { UserLogin, UserLoginSchema };
+
+export default UserLogin;

@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
+import axios from 'axios';
+import { body, validationResult } from 'express-validator';
+import auth from '../middleware/auth.js';
+import History from '../models/History.js';
+import requestIp from 'request-ip';
+
 const router = express.Router();
-const axios = require('axios');
-const { body, validationResult } = require('express-validator');
-const auth = require('../middleware/auth');
-const History = require('../models/History');
-const requestIp = require('request-ip');
 
 // @route   GET /api/geo/my-location
 // @desc    Get current user's location by IP
@@ -81,81 +82,6 @@ router.get(
   }
 );
 
-// Helper function to get geolocation data from ip-api.com
-async function getGeolocationData(ip) {
-  try {
-    const response = await axios.get(
-      `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query`,
-      { timeout: 5000 }
-    );
-    
-    if (response.data.status === 'fail') {
-      console.error('IP API Error:', response.data.message);
-      throw new Error(response.data.message);
-    }
-    
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching geolocation data:', error.message);
-    throw error;
-  }
-};
-
-// Helper function to save IP lookup to history
-const saveToHistory = async (userId, ip, geoData) => {
-  try {
-    console.log('Saving to history:', { 
-      userId: userId.toString(), 
-      ip, 
-      hasGeoData: !!geoData,
-      timestamp: new Date().toISOString()
-    });
-    
-    const historyItem = new History({
-      user: userId,
-      ip,
-      geoData
-    });
-    
-    console.log('History item to save:', JSON.stringify(historyItem, null, 2));
-    
-    const result = await History.findOneAndUpdate(
-      { user: userId, ip },
-      { 
-        $set: {
-          user: userId, 
-          ip, 
-          geoData,
-          updatedAt: new Date()
-        }
-      },
-      { 
-        upsert: true, 
-        new: true, 
-        setDefaultsOnInsert: true,
-        runValidators: true
-      }
-    );
-    
-    console.log('Successfully saved to history:', { 
-      id: result?._id, 
-      ip: result?.ip,
-      savedAt: new Date().toISOString()
-    });
-    
-    return result;
-  } catch (error) {
-    console.error('Error saving to history:', {
-      message: error.message,
-      stack: error.stack,
-      userId,
-      ip
-    });
-    // Don't fail the request if history save fails
-    return null;
-  }
-};
-
 // @route   POST /api/geo/save-search
 // @desc    Save IP lookup to search history
 // @access  Private
@@ -176,21 +102,19 @@ router.post('/save-search', auth, async (req, res) => {
       geoData: !!geoData 
     });
 
-    // Save to history
-    const historyItem = new History({
-      user: req.user._id,
-      ip,
-      geoData
-    });
-
-    await historyItem.save();
+    // Save to history using the saveToHistory helper
+    const result = await saveToHistory(req.user._id, ip, geoData);
     
-    console.log('Successfully saved search to history:', historyItem._id);
+    if (!result) {
+      throw new Error('Failed to save search to history');
+    }
+    
+    console.log('Successfully saved search to history:', result._id);
     
     res.json({ 
       success: true, 
       message: 'Search saved to history',
-      historyItem
+      historyItem: result
     });
   } catch (error) {
     console.error('Error saving search to history:', {
@@ -206,4 +130,100 @@ router.post('/save-search', auth, async (req, res) => {
   }
 });
 
-module.exports = router;
+// Helper function to get geolocation data from ip-api.com
+async function getGeolocationData(ip) {
+  try {
+    const response = await axios.get(
+      `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query`,
+      { timeout: 5000 }
+    );
+    
+    if (response.data.status === 'fail') {
+      console.error('IP API Error:', response.data.message);
+      throw new Error(response.data.message);
+    }
+    
+    return {
+      ip: response.data.query,
+      country: response.data.country,
+      countryCode: response.data.countryCode,
+      region: response.data.regionName,
+      regionCode: response.data.region,
+      city: response.data.city,
+      zip: response.data.zip,
+      lat: response.data.lat,
+      lon: response.data.lon,
+      timezone: response.data.timezone,
+      isp: response.data.isp,
+      org: response.data.org,
+      as: response.data.as
+    };
+  } catch (error) {
+    console.error('Error getting geolocation data:', error.message);
+    throw new Error('Failed to retrieve geolocation data');
+  }
+}
+
+// Helper function to save IP lookup to history
+async function saveToHistory(userId, ip, geoData) {
+  try {
+    console.log('Saving to history:', { 
+      userId: userId.toString(), 
+      ip, 
+      hasGeoData: !!geoData,
+      timestamp: new Date().toISOString()
+    });
+    
+    const historyData = {
+      user: userId,
+      ipAddress: ip,
+      location: {
+        country: geoData.country,
+        region: geoData.region,
+        city: geoData.city,
+        coordinates: {
+          lat: geoData.lat,
+          lng: geoData.lon
+        }
+      },
+      isp: geoData.isp,
+      timestamp: new Date(),
+      geoData // Store the full geoData for backward compatibility
+    };
+    
+    console.log('History item to save:', JSON.stringify(historyData, null, 2));
+    
+    const result = await History.findOneAndUpdate(
+      { user: userId, ip },
+      { 
+        $set: historyData,
+        $setOnInsert: { createdAt: new Date() }
+      },
+      { 
+        upsert: true, 
+        new: true, 
+        setDefaultsOnInsert: true,
+        runValidators: true
+      }
+    );
+    
+    console.log('Successfully saved to history:', { 
+      id: result?._id, 
+      ip: result?.ipAddress,
+      savedAt: new Date().toISOString()
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error saving to history:', {
+      message: error.message,
+      stack: error.stack,
+      userId,
+      ip
+    });
+    // Don't fail the request if history save fails
+    return null;
+  }
+}
+
+export default router;

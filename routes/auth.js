@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
+import { User } from '../models/User.js';
+import { UserLogin } from '../models/UserLogin.js';
+import auth from '../middleware/auth.js';
+import requestIp from 'request-ip';
+import axios from 'axios';
+
 const router = express.Router();
-const { User } = require('../models/User');
-const { UserLogin } = require('../models/UserLogin');
-const auth = require('../middleware/auth');
-const requestIp = require('request-ip');
-const axios = require('axios');
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
@@ -191,4 +192,4 @@ router.post('/logout', auth, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

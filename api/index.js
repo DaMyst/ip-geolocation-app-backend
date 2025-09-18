@@ -1,4 +1,9 @@
 import express from 'express';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from config/local.env
+dotenv.config({ path: path.resolve(process.cwd(), 'config/local.env') });
 import mongoose from 'mongoose';
 import cors from 'cors';
 import authRoutes from '../routes/auth.js';
@@ -54,14 +59,19 @@ app.use((req, res, next) => {
 
 // MongoDB Connection
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return; // Already connected
+  }
+
   try {
+    console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('MongoDB connected');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.log('MongoDB Connected...');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
     process.exit(1);
   }
 };
@@ -81,7 +91,8 @@ app.use((req, res) => {
 });
 
 // This is the Vercel serverless function handler
-module.exports = async (req, res) => {
+// For Vercel serverless function
+async function handler(req, res) {
   // Connect to the database if not already connected
   if (mongoose.connection.readyState === 0) {
     await connectDB();
@@ -89,4 +100,7 @@ module.exports = async (req, res) => {
   
   // Handle the request
   return app(req, res);
-};
+}
+
+// Export for both Vercel and local development
+export { handler, connectDB, app as default };

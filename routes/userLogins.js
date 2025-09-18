@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
+import auth from '../middleware/auth.js';
+import { UserLogin } from '../models/UserLogin.js';
+import axios from 'axios';
+
 const router = express.Router();
-const auth = require('../middleware/auth');
-// Import the UserLogin model correctly
-const { UserLogin } = require('../models/UserLogin');
-const axios = require('axios');
 
 // @route   GET /api/user-logins
 // @desc    Get user's login history
@@ -79,4 +79,4 @@ router.post('/track', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
