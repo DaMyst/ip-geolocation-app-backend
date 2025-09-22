@@ -16,18 +16,28 @@ import { errorHandler } from '../middleware/errorHandler.js';
 const app = express();
 
 // CORS Configuration
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://ip-geolocation-app-frontend.vercel.app',
-  'https://ip-geolocation-app.vercel.app'
-];
+const isProduction = process.env.NODE_ENV === 'production';
+const allowedOrigins = isProduction 
+  ? [
+      'https://ip-geolocation-app-frontend.vercel.app',
+      'https://ip-geolocation-app.vercel.app'
+    ]
+  : ['http://localhost:3000'];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (isProduction) {
+      // In production, only allow specific origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // In development, allow all origins
+      return callback(null, true);
     }
   },
   credentials: true,

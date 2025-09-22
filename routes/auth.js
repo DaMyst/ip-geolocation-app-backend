@@ -10,10 +10,20 @@ const router = express.Router();
 // @route   POST /api/auth/register
 // @desc    Register a new user
 // @access  Public
+
+router.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return res.status(200).end();
+});
+
 router.post('/register', async (req, res) => {
   // Set CORS headers
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  // res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  // res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  // res.header('Access-Control-Allow-Credentials', 'true');
   
   try {
     const { email, password } = req.body;

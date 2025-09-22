@@ -8,12 +8,17 @@
         "includeFiles": [
           "**/*.js",
           "**/*.json",
-          "**/*.mjs"
+          "**/*.mjs",
+          "config/*.env"
         ]
       }
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    },
     {
       "src": "/(.*)",
       "dest": "/api/index.js"
